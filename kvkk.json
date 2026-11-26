@@ -1,0 +1,67 @@
+{
+  "legal": {
+    "controller": "icap (kurucu: Ali Kahraman)",
+    "contact": "kvkk@icap.club",
+    "updated": "15 Kasım 2026",
+    "version": "1.1"
+  },
+  "title": "Kişisel Verilerin Korunması Aydınlatma Metni",
+  "sections": [
+    {
+      "h": "1. Veri sorumlusu",
+      "p": [
+        "Bu metin, icap kampüs etkinlik ve kulüp uygulamasını kullanan öğrenciler ve kulüp yöneticileri için hazırlanmıştır. Veri sorumlusu icap (kurucu: Ali Kahraman)'dur. Bize kvkk@icap.club adresinden ulaşabilirsin."
+      ]
+    },
+    {
+      "h": "2. Hangi verilerini işliyoruz?",
+      "p": [
+        "Kimlik: ad ve soyad.",
+        "İletişim: e-posta adresi; sponsorluk başvurusunda yazdığın iletişim bilgisi.",
+        "Eğitim: üniversite ve bölüm.",
+        "Kullanım ve işlem: kulüp üyeliklerin, yönetici rolün, aidat durumun, etkinlik kayıtların, bilet kodun ve etkinlik girişinde (check-in) okutulma zamanı.",
+        "Uygulama içeriği: yönetici olarak yazdığın duyurular, eklediğin sponsorlar ve oluşturduğun etkinlikler.",
+        "Oturum notları: etkinlik programındaki oturumlara aldığın notlar ve bunlardan üretilen özetin. Notlarını yalnızca sen görürsün.",
+        "Kamera görüntüsü kaydedilmez; QR okutma sırasında yalnızca bilet kodu okunur."
+      ]
+    },
+    {
+      "h": "3. Neden işliyoruz?",
+      "p": [
+        "Hesabını açmak ve oturumunu yönetmek; etkinliklere kaydını almak ve QR biletini oluşturmak; kapıda giriş doğrulaması yapmak; kulüp üyeliğini, yöneticiliğini ve aidat durumunu takip etmek; kulüp duyurularını sana göstermek; hizmetin güvenliğini sağlamak ve kötüye kullanımı önlemek; etkinlik katılımını kulüplere toplu sayılar olarak raporlamak.",
+        "İsteğe bağlı olarak, açtığın takdirde notlarını yapay zekâyla düzenlemek ve etkinlik özetini çıkarmak; organizatör özetine katılmayı seçtiysen etkinlik için isimsiz bir özet üretmek."
+      ]
+    },
+    {
+      "h": "4. Hukuki sebepler",
+      "p": [
+        "Hesap, kayıt, bilet ve giriş işlemleri: hizmetin sunulması için sözleşmenin kurulması ve ifası (KVKK md. 5/2-c).",
+        "Güvenlik ve kötüye kullanımın önlenmesi: meşru menfaat (md. 5/2-f).",
+        "Verilerin yurt dışındaki sunucularda saklanması: açık rızan (md. 9)."
+      ]
+    },
+    {
+      "h": "5. Kimlerle paylaşıyoruz?",
+      "p": [
+        "Kaydolduğun etkinliği düzenleyen kulübün yöneticileri; adını, bölümünü ve kayıt/giriş durumunu katılımcı listesinde görür. Sponsorluk başvurun yalnızca başvurduğun kulübün yöneticilerine iletilir.",
+        "Altyapı hizmeti: veriler, Supabase Inc. tarafından sağlanan ve Avrupa Birliği'nde (İrlanda) bulunan sunucularda barındırılır. Bu aktarım KVKK md. 9 kapsamında açık rızana dayanır.",
+        "Yapay zekâ ile not düzenleme (isteğe bağlı, varsayılan kapalı): açarsan not metnin ve oturum başlıkları, düzenleme ve özet için Anthropic PBC (ABD) altyapısına gönderilir. Göndermeden önce adın, e-posta adresin, telefon, IBAN ve kimlik numarası gibi bilgiler metinden otomatik silinir; hesap bilgilerin gönderilmez. Organizatör özetine katılmayı seçersen notun, en az 5 katılımcının notuyla birlikte isimsiz özet üretmek için kullanılır; organizatör notunu hiçbir koşulda göremez. Bu özelliği Profil › Ayarlar’dan istediğin an kapatabilirsin.",
+        "Verilerini satmayız, reklam amacıyla üçüncü kişilerle paylaşmayız."
+      ]
+    },
+    {
+      "h": "6. Ne kadar saklıyoruz?",
+      "p": [
+        "Hesabın açık olduğu sürece saklarız. Hesabını sildiğinde profilin, üyeliklerin, etkinlik kayıtların ve başvuruların kalıcı olarak silinir. Yasal saklama yükümlülüğü doğarsa ilgili veriler yalnızca o süre boyunca tutulur."
+      ]
+    },
+    {
+      "h": "7. Hakların (KVKK md. 11)",
+      "p": [
+        "Verilerinin işlenip işlenmediğini öğrenme, işlenmişse bilgi isteme, amacını ve amaca uygun kullanılıp kullanılmadığını öğrenme, aktarıldığı kişileri bilme, eksik ya da yanlışsa düzeltilmesini, silinmesini veya yok edilmesini isteme, bu işlemlerin aktarılan kişilere bildirilmesini isteme, otomatik analiz sonucu aleyhine bir sonuca itiraz etme ve kanuna aykırı işleme nedeniyle zararın giderilmesini talep etme haklarına sahipsin.",
+        "Başvurunu kvkk@icap.club adresine gönderebilirsin; en geç 30 gün içinde yanıtlarız. Hesabını uygulamada Profil → KVKK ve gizlilik → Hesabımı sil adımıyla kendin de silebilirsin."
+      ]
+    }
+  ],
+  "consent": "Aydınlatma Metni'ni okudum. Etkinlik kaydı ve giriş (check-in) için verilerimin işlenmesine ve AB'deki sunucularda saklanmasına açık rıza veriyorum."
+}
