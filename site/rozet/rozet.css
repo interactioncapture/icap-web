@@ -1,0 +1,85 @@
+/* icap · yaka kartı paneli */
+.layout{display:grid;grid-template-columns:360px 1fr;gap:18px;align-items:start}
+@media(max-width:960px){.layout{grid-template-columns:1fr}}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:22px;padding:18px;display:grid;gap:12px}
+.panel h2{font-size:15px;letter-spacing:-.01em}
+.lbl{font-size:12px;font-weight:800;color:var(--muted);margin-bottom:-6px}
+.seg{display:flex;background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:3px;gap:3px}
+.seg button{flex:1;border:0;background:transparent;border-radius:9px;padding:8px 6px;font-weight:700;color:var(--muted);cursor:pointer}
+.seg button.on{background:var(--card);color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.08)}
+select.in,textarea.in{width:100%}
+textarea.in{height:auto;min-height:54px;padding:10px 14px;resize:vertical}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.check{display:flex;align-items:center;gap:8px;font-weight:600;cursor:pointer}
+.check input{width:18px;height:18px;accent-color:var(--violet)}
+.swatches{display:flex;gap:6px;flex-wrap:wrap}
+.sw{width:30px;height:30px;border-radius:10px;border:2px solid transparent;cursor:pointer}
+.sw.on{border-color:var(--ink);box-shadow:0 0 0 2px #fff inset}
+.drop{border:1.5px dashed var(--line);border-radius:14px;padding:12px;text-align:center;color:var(--muted);cursor:pointer;background:var(--bg)}
+.drop img{max-width:100%;max-height:90px;display:block;margin:0 auto 6px;object-fit:contain}
+.hint{font-size:12px;color:var(--faint)}
+.saved{font-size:12px;font-weight:700;color:var(--ld)}
+.preview{background:repeating-conic-gradient(#EFEAF8 0 25%,#F7F4FC 0 50%) 0 0/20px 20px;border:1px solid var(--line);border-radius:22px;padding:24px;display:grid;place-items:center;min-height:300px}
+.preview .badge{box-shadow:0 18px 40px -18px rgba(40,10,90,.45)}
+.list{background:var(--card);border:1px solid var(--line);border-radius:22px;padding:14px 16px;margin-top:16px}
+.tools{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:10px}
+.tools .in{height:40px;flex:1;min-width:180px}
+.btn.sm{height:40px;padding:0 16px}
+.person{display:grid;grid-template-columns:24px 1fr auto auto;gap:10px;align-items:center;padding:9px 2px;border-top:1px solid var(--line)}
+.person:first-of-type{border-top:0}
+.person .nm{font-weight:700}
+.person .dt{font-size:12px;color:var(--muted)}
+.st{font-size:11px;font-weight:800;padding:3px 9px;border-radius:999px;background:var(--tv);color:var(--violet2)}
+.st.inside{background:var(--tl);color:var(--ld)}
+.pbtn{border:1px solid var(--line);background:var(--card);border-radius:10px;padding:6px 10px;font-weight:700;cursor:pointer}
+.events{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px}
+.ev{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:14px;cursor:pointer;text-align:left}
+.ev:hover{border-color:var(--violet)}
+.ev h3{font-size:15px}
+.ev p{color:var(--muted);font-size:13px}
+
+/* ---- Yaka kartı (ekran önizleme ve baskı aynı ölçüler: mm) ---- */
+.badge{position:relative;background:#fff;color:#15111F;overflow:hidden;display:flex;flex-direction:column;font-family:'Plus Jakarta Sans',system-ui,sans-serif;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.badge .hd{flex:none;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:2.5mm 3mm;overflow:hidden}
+.badge .hd img{max-width:100%;max-height:100%;object-fit:contain;display:block}
+.badge .hd .t{font-weight:800;line-height:1.08;letter-spacing:-.02em}
+.badge .hd .s{font-weight:700;opacity:.88;margin-top:.8mm}
+.badge .bd{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:2mm 4mm;gap:1.2mm;min-height:0}
+.badge .nm{font-weight:800;line-height:1.02;letter-spacing:-.03em;width:100%;overflow:hidden;word-break:break-word}
+.badge .dp{color:#6B6880;font-weight:700;line-height:1.15;width:100%}
+.badge .role{display:inline-block;font-weight:800;letter-spacing:.08em;text-transform:uppercase;border-radius:999px;padding:.6mm 3mm}
+.badge .ft{flex:none;display:flex;align-items:center;gap:2.5mm;padding:2mm 3.5mm 2.8mm}
+.badge .ft .qr svg{display:block;width:100%;height:100%}
+.badge .ft .ev{flex:1;min-width:0;font-weight:700;color:#6B6880;line-height:1.2;border:0;padding:0;background:none;cursor:default}
+.badge .ft .code{font-family:ui-monospace,Menlo,monospace;font-weight:700;color:#15111F;letter-spacing:.04em}
+.badge .ft .ic{font-weight:800;color:#7C3AED;letter-spacing:-.04em}
+.badge .hole{position:absolute;left:50%;top:2.2mm;width:12mm;height:2.6mm;border-radius:2mm;transform:translateX(-50%);border:.3mm dashed #C9C2DA;background:#fff;opacity:.9}
+
+/* Baskı: yalnızca kartlar */
+#print{display:none}
+@media print{
+  html,body{background:#fff!important;margin:0!important;padding:0!important}
+  .no-print{display:none!important}
+  #print{display:block}
+  #print .pg{page-break-after:always;break-after:page;overflow:hidden}
+  #print .pg:last-child{page-break-after:auto;break-after:auto}
+  #print .sheet{display:grid;justify-content:center;align-content:start}
+  #print .sheet .badge{outline:.2mm dashed #bbb}
+}
+.drop.over{border-color:var(--violet);background:var(--tv)}
+.drop b{color:var(--ink)}
+input[type=range]{width:100%;accent-color:var(--violet)}
+.badge .hd.bleed{padding:0}
+.preview .hd.pickable{cursor:pointer;position:relative}
+.preview .hd.pickable:hover::after{content:'Logo / afiş yükle';position:absolute;inset:0;display:grid;place-items:center;background:rgba(21,17,31,.55);color:#fff;font-weight:800;font-size:13px}
+.badge .ft .qr{flex:none;background:#fff}
+/* Siyah-beyaz (termal) mod: gri yok, ince çizgi yok, büyük siyah alan yok */
+.mono-row{align-items:flex-start;background:var(--bg);border:1px solid var(--line);border-radius:14px;padding:10px 12px}
+.mono-row input{margin-top:2px}
+.badge.mono .hd{border-bottom:.8mm solid #000}
+.badge.mono .hd.bleed{border-bottom:0}
+.badge.mono .hd img{filter:grayscale(1) contrast(1.35) brightness(1.05)}
+.badge.mono .dp,.badge.mono .ft .ev,.badge.mono .ft .ic{color:#000!important}
+.badge.mono .hd .s{opacity:1}
+.badge.mono .hole{border-color:#000;opacity:1}
+.swatches[hidden]{display:none}
