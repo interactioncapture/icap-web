@@ -1,0 +1,46 @@
+# icap web davet sitesi — GitHub Pages'e yayınlar.
+# Etkinlik sayfaları ve WhatsApp önizleme görselleri 15 dakikada bir Supabase'den yeniden üretilir.
+# Yeni etkinliklerin linki üretim beklemeden anında çalışır (404.html tarayıcıda yükler).
+name: Web davet sitesi
+on:
+  push:
+    branches: [main]
+  schedule:
+    - cron: '*/15 * * * *'
+  workflow_dispatch:
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+concurrency:
+  group: pages
+  cancel-in-progress: true
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install "pillow>=11"
+      - name: Uygulamanın yazı tipi (Plus Jakarta Sans, OFL)
+        run: |
+          mkdir -p /tmp/pj && cd /tmp/pj && npm pack @expo-google-fonts/plus-jakarta-sans --silent >/dev/null && tar -xzf *.tgz
+          cp "$(find /tmp/pj -name 'PlusJakartaSans_800ExtraBold.ttf' | head -1)" "$GITHUB_WORKSPACE/fonts/PlusJakartaSans-ExtraBold.ttf"
+          cp "$(find /tmp/pj -name 'PlusJakartaSans_600SemiBold.ttf' | head -1)" "$GITHUB_WORKSPACE/fonts/PlusJakartaSans-SemiBold.ttf"
+          ls "$GITHUB_WORKSPACE/fonts"
+      - name: Sayfaları üret
+        run: |
+          OWNER="${GITHUB_REPOSITORY_OWNER}"
+          REPO="${GITHUB_REPOSITORY#*/}"
+          python3 build.py --out dist --base "/${REPO}/" --site "https://${OWNER}.github.io/${REPO}"
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+      - id: deploy
+        uses: actions/deploy-pages@v4
