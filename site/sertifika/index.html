@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>icap · Sertifika doğrulama</title>
+<meta name="description" content="icap katılım sertifikası doğrulama">
+<meta name="theme-color" content="#7C3AED">
+<link rel="icon" href="../favicon.png"><link rel="apple-touch-icon" href="../icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../style.css">
+<style>
+  .cert{position:relative;overflow:hidden;border-radius:24px;padding:24px;color:#fff;background:linear-gradient(135deg,#7C3AED,#FF3D8B,#FF8A00);aspect-ratio:1.414;display:flex;flex-direction:column;justify-content:space-between}
+  .cert .kind{font-size:11px;font-weight:800;letter-spacing:.14em;opacity:.85}
+  .cert h2{font-size:26px;letter-spacing:-.02em;line-height:1.15}
+  .cert p{font-weight:600;opacity:.92}
+  .cert small{opacity:.75;font-weight:600}
+  .ok{display:flex;gap:10px;align-items:center;background:var(--tint-l);color:var(--lime-d);border-radius:16px;padding:12px 14px;font-weight:700;margin-bottom:12px}
+  .bad{background:var(--tint-p);color:#C2185B}
+  @media (max-width:380px){.cert h2{font-size:21px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top"><a class="brand" href="../" aria-label="icap"><img src="../icon.png" alt=""><b class="wm"><span class="i">ı<svg viewBox="0 0 24 32" aria-hidden="true"><path fill-rule="evenodd" d="M12 0C5.37 0 0 5.2 0 11.62 0 20.33 12 32 12 32s12-11.67 12-20.38C24 5.2 18.63 0 12 0Zm0 16.6a4.9 4.9 0 1 1 0-9.8 4.9 4.9 0 0 1 0 9.8Z"/></svg></span>cap</b></a><span class="chip lime">Sertifika doğrulama</span></div>
+  <main id="app"><div class="skeleton" style="height:240px"></div></main>
+</div>
+<script src="../unis.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.58.0/dist/umd/supabase.js"></script>
+<script src="sertifika.js"></script>
+</body>
+</html>
