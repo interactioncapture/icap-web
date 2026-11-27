@@ -2,14 +2,17 @@
 *{box-sizing:border-box;margin:0}
 body{font-family:'Plus Jakarta Sans',system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:var(--bg);color:var(--ink);-webkit-font-smoothing:antialiased;line-height:1.45;font-size:14px}
 button,input{font:inherit}
-.top{position:sticky;top:0;z-index:5;display:flex;align-items:center;justify-content:space-between;padding:14px 28px;background:rgba(246,244,251,.85);backdrop-filter:blur(12px);border-bottom:1px solid var(--line)}
-.brand{display:flex;align-items:center;gap:12px}
-.wm{position:relative;display:inline-block;padding-top:.34em;line-height:1;font-size:30px;font-weight:800;letter-spacing:-.04em}
+.top{position:sticky;top:0;z-index:5;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 28px;background:rgba(246,244,251,.85);backdrop-filter:blur(12px);border-bottom:1px solid var(--line)}
+.brand{display:flex;align-items:center;gap:12px;flex-shrink:0}
+/* Logo hiçbir genişlikte "ı" ve "cap" diye ikiye bölünmesin */
+.wm{position:relative;display:inline-block;padding-top:.34em;line-height:1;font-size:30px;font-weight:800;letter-spacing:-.04em;white-space:nowrap;flex-shrink:0}
 .wm .i{position:relative;display:inline-block}
 .wm svg{position:absolute;left:50%;top:-.3em;width:.36em;height:.48em;transform:translateX(-50%);fill:var(--violet)}
-.tag{font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--violet);background:var(--tv);padding:5px 10px;border-radius:999px}
-.who{display:flex;align-items:center;gap:10px;color:var(--muted);font-weight:600}
-.who button{border:0;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:7px 12px;font-weight:700;cursor:pointer;color:var(--ink)}
+.tag{font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--violet);background:var(--tv);padding:5px 10px;border-radius:999px;white-space:nowrap}
+/* Uzun e-posta düğmeyi itmez: sığmazsa "…" ile kısalır */
+.who{display:flex;align-items:center;gap:10px;color:var(--muted);font-weight:600;min-width:0}
+.who span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.who button{border:0;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:7px 12px;font-weight:700;cursor:pointer;color:var(--ink);flex-shrink:0;white-space:nowrap}
 main{max-width:1240px;margin:0 auto;padding:24px 28px 40px}
 .center{min-height:60vh;display:grid;place-items:center}
 .spin{width:34px;height:34px;border-radius:50%;border:3px solid var(--tv);border-top-color:var(--violet);animation:s 0.8s linear infinite}
@@ -25,7 +28,8 @@ main{max-width:1240px;margin:0 auto;padding:24px 28px 40px}
 .head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:18px}
 .head h1{font-size:28px;letter-spacing:-.03em}
 .head .sub{color:var(--muted);font-weight:600}
-.ghost{border:1px solid var(--line);background:var(--card);border-radius:12px;padding:9px 14px;font-weight:700;cursor:pointer;display:inline-flex;gap:8px;align-items:center}
+.ghost{border:1px solid var(--line);background:var(--card);border-radius:12px;padding:9px 14px;font-weight:700;cursor:pointer;display:inline-flex;gap:8px;align-items:center;white-space:nowrap;flex-shrink:0}
+.head>div:first-child{min-width:0}
 .kpis{display:grid;grid-template-columns:repeat(6,1fr);gap:12px;margin-bottom:16px}
 .kpi{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:16px}
 .kpi .l{color:var(--muted);font-size:12px;font-weight:700}
@@ -83,6 +87,8 @@ td .s{color:var(--muted);font-size:12px}
 .toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;padding:12px 18px;border-radius:14px;font-weight:700;box-shadow:0 12px 30px -12px rgba(0,0,0,.4)}
 .foot{text-align:center;color:var(--faint);font-size:11px;letter-spacing:.12em;font-weight:800;padding:10px 0 30px}
 @media (max-width:1100px){.kpis{grid-template-columns:repeat(3,1fr)}.grid{grid-template-columns:1fr}}
+/* Telefon: üst çubukta logo + kısa etiket + Çıkış; e-posta gizlenir. Başlık satırında geri düğmesi başlığın üstüne alınır */
+@media (max-width:640px){.wm{font-size:24px}.who span{display:none}.head{flex-direction:column-reverse;align-items:flex-start;gap:10px}.head h1{font-size:24px}}
 @media (max-width:640px){main{padding:16px}.top{padding:12px 16px}.kpis{grid-template-columns:repeat(2,1fr)}.club{grid-template-columns:44px 1fr}.club .acts{grid-column:1/-1}.logo{width:44px;height:44px}}
 /* SKS paneli */
 .permit{display:grid;grid-template-columns:1fr auto;gap:16px;padding:16px 4px;border-top:1px solid var(--line)}
