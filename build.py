@@ -3,10 +3,11 @@
 
 Supabase'den yaklaşan etkinlikleri çeker; her etkinlik için WhatsApp/Instagram önizlemesi (Open Graph)
 olan bir sayfa ve 1200x630 kapak görseli üretir. Henüz üretilmemiş yeni etkinlikler 404.html üzerinden
-tarayıcıda yüklenir, yani link anında çalışır; önizleme kartı bir sonraki üretimde (en geç 15 dk) gelir.
+tarayıcıda yüklenir, yani link anında çalışır; önizleme kartı bir sonraki üretimde gelir (Supabase sinyaliyle
+birkaç dakika, sinyal yoksa saatlik üretimde).
 
 Kullanım:
-  python3 build.py --out dist --base /icap-web/ --site https://kullanici.github.io/icap-web
+  python3 build.py --out dist --base /icap-web/ --site https://interactioncapture.github.io/icap-web
   python3 build.py --out dist --sample        # ağ olmadan örnek veriyle (yerel test)
 """
 import argparse, html, json, os, shutil, sys, urllib.request

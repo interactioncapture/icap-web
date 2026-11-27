@@ -52,6 +52,8 @@
     if (l.indexOf('password should') >= 0) return 'Şifre en az 6 karakter olmalı.';
     if (l.indexOf('invalid email') >= 0 || l.indexOf('validate email') >= 0) return 'Geçerli bir e-posta adresi gir.';
     if (l.indexOf('fetch') >= 0 || l.indexOf('network') >= 0) return 'Bağlantı hatası. İnternetini kontrol et.';
+    if (l.indexOf('email not confirmed') >= 0) return 'E-postanı doğrulaman gerekiyor. Gelen kutunu kontrol et.';
+    if (l.indexOf('rate limit') >= 0 || l.indexOf('for security purposes') >= 0) return 'Çok sık denedin. Bir dakika bekleyip tekrar dene.';
     return m;
   }
   // Davet kaynağı (Interaction Capture · Invite): WhatsApp linki, afişteki QR ya da doğrudan web
@@ -147,7 +149,9 @@
       field('pw', ICON.lock, su ? 'Şifre (en az 6 karakter)' : 'Şifre', 'password', su ? 'new-password' : 'current-password') +
       (su ? '<label class="consent"><input type="checkbox" id="kvkk"><span><a href="' + ROOT + 'kvkk/" target="_blank" rel="noopener">Aydınlatma Metni</a>' + esc((window.ICAP_CONSENT || '').replace('Aydınlatma Metni', '')) + '</span></label>' : '') +
       (S.err ? '<div class="err">' + esc(S.err) + '</div>' : '') +
-      '<button class="btn" id="go"' + (S.busy ? ' disabled' : '') + '>' + (S.busy ? '<span class="spin"></span>' : (su ? 'Hesap aç ve katıl' : 'Giriş yap ve katıl')) + '</button></div>';
+      (S.info ? '<div class="err" style="background:var(--tint-l);color:var(--lime-d)">' + esc(S.info) + '</div>' : '') +
+      '<button class="btn" id="go"' + (S.busy ? ' disabled' : '') + '>' + (S.busy ? '<span class="spin"></span>' : (su ? 'Hesap aç ve katıl' : 'Giriş yap ve katıl')) + '</button>' +
+      (su ? '' : '<p class="note"><a href="#" id="forgot" style="color:var(--violet);font-weight:700">Şifremi unuttum</a></p>') + '</div>';
   }
   function field(id, icon, ph, type, ac) {
     var v = (document.getElementById(id) || {}).value || '';
@@ -192,7 +196,8 @@
     }
     // Form olayları
     var tabs = $app.querySelectorAll('[data-tab]');
-    for (var i = 0; i < tabs.length; i++) tabs[i].onclick = function (e) { S.tab = e.currentTarget.getAttribute('data-tab'); S.err = null; renderEvent(); };
+    for (var i = 0; i < tabs.length; i++) tabs[i].onclick = function (e) { S.tab = e.currentTarget.getAttribute('data-tab'); S.err = null; S.info = null; renderEvent(); };
+    var fg = document.getElementById('forgot'); if (fg) fg.onclick = function (e) { e.preventDefault(); forgot(); };
     var go = document.getElementById('go'); if (go) go.onclick = submit;
     bindUni();
     var pw = document.getElementById('pw'); if (pw) pw.onkeydown = function (e) { if (e.key === 'Enter') submit(); };
@@ -236,15 +241,28 @@
     if (!/\S+@\S+\.\S+/.test(email)) { S.err = 'Geçerli bir e-posta adresi gir.'; return renderEvent(); }
     if (pw.length < 6) { S.err = 'Şifre en az 6 karakter olmalı.'; return renderEvent(); }
     if (su && !document.getElementById('kvkk').checked) { S.err = 'Devam etmek için Aydınlatma Metni onayını işaretle.'; return renderEvent(); }
-    S.busy = true; S.err = null; renderEvent();
+    S.busy = true; S.err = null; S.info = null; renderEvent();
     var p = su
-      ? sb.auth.signUp({ email: email, password: pw, options: { data: { full_name: name, department: dept, university: uni || undefined, kvkk_accepted_at: new Date().toISOString() } } })
+      // Doğrulama bağlantısı bu etkinlik sayfasına döner: kişi girişli olarak geri gelir ve kaydını tamamlar
+      ? sb.auth.signUp({ email: email, password: pw, options: { emailRedirectTo: location.origin + location.pathname, data: { full_name: name, department: dept, university: uni || undefined, kvkk_accepted_at: new Date().toISOString() } } })
       : sb.auth.signInWithPassword({ email: email, password: pw });
     p.then(function (res) {
       if (res.error) throw res.error;
       if (!res.data.session) throw new Error('E-postanı doğrulaman gerekiyor. Gelen kutunu kontrol et.');
       S.session = res.data.session; S.showForm = false;
       return register();
+    }).catch(function (e) { S.busy = false; S.err = trErr(e.message); renderEvent(); });
+  }
+
+  // Şifre sıfırlama bağlantısı /hesap/ sayfasını açar; yeni şifre orada belirlenir
+  function forgot() {
+    var email = ((document.getElementById('email') || {}).value || '').trim();
+    S.err = null; S.info = null;
+    if (!/\S+@\S+\.\S+/.test(email)) { S.err = 'Önce e-posta adresini yaz, sıfırlama bağlantısını oraya gönderelim.'; return renderEvent(); }
+    S.busy = true; renderEvent();
+    sb.auth.resetPasswordForEmail(email, { redirectTo: new URL(ROOT + 'hesap/', location.href).href }).then(function (r) {
+      if (r.error) throw r.error;
+      S.busy = false; S.info = 'Bu e-postayla bir hesap varsa şifre sıfırlama bağlantısı gönderdik. Gelen kutunu kontrol et.'; renderEvent();
     }).catch(function (e) { S.busy = false; S.err = trErr(e.message); renderEvent(); });
   }
 

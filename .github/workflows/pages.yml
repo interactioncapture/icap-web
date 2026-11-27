@@ -1,12 +1,17 @@
 # icap web davet sitesi — GitHub Pages'e yayınlar.
-# Etkinlik sayfaları ve WhatsApp önizleme görselleri 15 dakikada bir Supabase'den yeniden üretilir.
-# Yeni etkinliklerin linki üretim beklemeden anında çalışır (404.html tarayıcıda yükler).
+# Etkinlik sayfaları ve WhatsApp önizleme görselleri Supabase'den üretilir:
+#  - Etkinlik açılınca/değişince Supabase "events" sinyali gönderir (repository_dispatch, migration 022) → hemen üretilir.
+#  - Saatlik zamanlanmış üretim yedektir (sinyal kaçarsa, geçmiş etkinlikler listeden düşsün diye).
+#    GitHub, depoda 60 gün işlem olmazsa zamanlanmış işi durdurur; sinyal ve gönderimler bundan etkilenmez.
+# Yeni etkinliklerin linki üretim beklemeden de çalışır (404.html tarayıcıda yükler; yalnızca önizleme kartı gecikir).
 name: Web davet sitesi
 on:
   push:
     branches: [main]
+  repository_dispatch:
+    types: [events]
   schedule:
-    - cron: '*/15 * * * *'
+    - cron: '17 * * * *'
   workflow_dispatch:
 permissions:
   contents: read
@@ -22,8 +27,8 @@ jobs:
       name: github-pages
       url: ${{ steps.deploy.outputs.page_url }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: '3.12'
       - run: pip install "pillow>=11"
@@ -38,9 +43,9 @@ jobs:
           OWNER="${GITHUB_REPOSITORY_OWNER}"
           REPO="${GITHUB_REPOSITORY#*/}"
           python3 build.py --out dist --base "/${REPO}/" --site "https://${OWNER}.github.io/${REPO}"
-      - uses: actions/configure-pages@v5
-      - uses: actions/upload-pages-artifact@v3
+      - uses: actions/configure-pages@v6
+      - uses: actions/upload-pages-artifact@v5
         with:
           path: dist
       - id: deploy
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5

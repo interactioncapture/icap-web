@@ -59,13 +59,20 @@
   }
 
   // ---------- Etkinlikler ----------
+  // icap yönetimi (platform_admins) bütün etkinlikleri görür; diğerleri yönettiği kulüplerin etkinliklerini ve kendi buluşmalarını
   function loadEvents() {
-    return sb.from('club_members').select('club_id').eq('user_id', S.uid).eq('role', 'admin').then(function (m) {
+    return Promise.all([
+      sb.from('club_members').select('club_id').eq('user_id', S.uid).eq('role', 'admin'),
+      sb.from('platform_admins').select('user_id').eq('user_id', S.uid).maybeSingle(),
+    ]).then(function (res) {
+      var m = res[0];
       if (m.error) throw m.error;
+      S.platform = !!(res[1] && res[1].data);
       var ids = (m.data || []).map(function (x) { return x.club_id; });
-      var or = 'host_id.eq.' + S.uid + (ids.length ? ',club_id.in.(' + ids.join(',') + ')' : '');
-      return sb.from('events').select('id,title,starts_at,place,tz,club_id,kind,host_id,host_name,badge,clubs(name,short,color)')
-        .or(or).gte('starts_at', new Date(Date.now() - 7 * 864e5).toISOString()).order('starts_at').limit(100);
+      var qy = sb.from('events').select('id,title,starts_at,place,tz,club_id,kind,host_id,host_name,badge,clubs(name,short,color)')
+        .gte('starts_at', new Date(Date.now() - 7 * 864e5).toISOString()).order('starts_at').limit(S.platform ? 300 : 100);
+      if (!S.platform) qy = qy.or('host_id.eq.' + S.uid + (ids.length ? ',club_id.in.(' + ids.join(',') + ')' : ''));
+      return qy;
     }).then(function (r) {
       if (r.error) throw r.error;
       S.events = r.data || [];
@@ -78,7 +85,7 @@
   }
 
   function renderEvents() {
-    $app.innerHTML = '<div class="head"><div><h1>Yaka kartı bas</h1><div class="sub">Yönettiğin yaklaşan etkinlikler</div></div></div>' +
+    $app.innerHTML = '<div class="head"><div><h1>Yaka kartı bas</h1><div class="sub">' + (S.platform ? 'icap yönetimi · tüm yaklaşan etkinlikler' : 'Yönettiğin yaklaşan etkinlikler') + '</div></div></div>' +
       (S.events.length ? '<div class="events">' + S.events.map(function (e) {
         return '<button class="ev" data-id="' + e.id + '"><h3>' + esc(e.title) + '</h3><p>' + esc(owner(e)) + '</p><p>' + esc(when(e)) + ' · ' + esc(e.place) + '</p></button>';
       }).join('') + '</div>' : '<div class="empty">Yönettiğin yaklaşan bir etkinlik yok. Kulübünün yöneticisiysen ya da bir buluşma açtıysan burada görünür.</div>');
@@ -263,7 +270,8 @@
     if (file.size > 3 * 1024 * 1024) return toast('Görsel en fazla 3 MB olabilir');
     if (['image/png', 'image/jpeg', 'image/webp'].indexOf(file.type) < 0) return toast('PNG, JPG ya da WEBP yükle');
     var ext = file.type === 'image/png' ? 'png' : file.type === 'image/webp' ? 'webp' : 'jpg';
-    var folder = S.ev.club_id || S.uid;
+    // Görsel etkinliğin klasörüne: kulüp etkinliğinde kulübün, buluşmada sahibinin (yönetim de bu klasöre yükler)
+    var folder = S.ev.club_id || S.ev.host_id || S.uid;
     var path = folder + '/badge-' + S.ev.id + '-' + Date.now() + '.' + ext;
     toast('Yükleniyor…');
     sb.storage.from('event-covers').upload(path, file, { contentType: file.type, upsert: false }).then(function (r) {
