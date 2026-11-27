@@ -43,9 +43,11 @@ jobs:
           OWNER="${GITHUB_REPOSITORY_OWNER}"
           REPO="${GITHUB_REPOSITORY#*/}"
           python3 build.py --out dist --base "/${REPO}/" --site "https://${OWNER}.github.io/${REPO}"
-      - uses: actions/configure-pages@v6
-      - uses: actions/upload-pages-artifact@v5
+      # Pages üçlüsü birlikte sabit: upload-pages-artifact@v5 + deploy-pages@v5 "No artifacts named github-pages" hatası verdi.
+      # Node 20 uyarısı veriyor ama çalışıyor; yükseltme ayrı bir dalda denenmeli.
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
         with:
           path: dist
       - id: deploy
-        uses: actions/deploy-pages@v5
+        uses: actions/deploy-pages@v4
