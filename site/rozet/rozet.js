@@ -18,9 +18,12 @@
     a4x8: { w: 90, h: 65, l: 'A4 kâğıda 8 kart · ofis yazıcısı (kesme çizgili)', sheet: true },
   };
   var COLORS = ['#7C3AED', '#15111F', '#FF3D8B', '#FF8A00', '#0EA5E9', '#16A34A', '#B91C1C', '#FFFFFF'];
-  var STATUS = { approved: 'Onaylı', checked_in: 'İçeride', pending: 'Onay bekliyor', waitlist: 'Bekleme listesi' };
+  var STATUS = { approved: 'Onaylı', checked_in: 'İçeride', pending: 'Onay bekliyor', waitlist: 'Bekleme listesi', walkin: 'Kapıda kayıt' };
+  // Kişiye özel rol seçenekleri (boş = tasarımdaki varsayılan rol)
+  var ROLES = ['Katılımcı', 'Konuşmacı', 'Jüri', 'Mentor', 'Gönüllü', 'Organizatör', 'Basın', 'Misafir', 'Sponsor'];
   var DEF = { size: 'p34', mode: 'text', title: '', sub: '', color: '#7C3AED', image: '', fit: 'contain', head: 30, mono: false, role: 'Katılımcı', dept: true, qr: true, hole: false };
-  var S = { uid: null, events: [], ev: null, people: [], sel: {}, q: '', f: 'ok', D: null, dirty: false, busy: false };
+  var S = { uid: null, events: [], ev: null, people: [], sel: {}, q: '', f: 'ok', D: null, dirty: false, busy: false, walk: false };
+  function hm(iso) { try { return new Date(iso).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' }); } catch (_) { return ''; } }
 
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
   function light(c) { return ['#FFFFFF', '#C6F432', '#22D3EE'].indexOf(String(c).toUpperCase()) >= 0; }
@@ -102,17 +105,25 @@
     S.dirty = !Object.keys(saved).length;
     history.replaceState(null, '', '?e=' + ev.id);
     $app.innerHTML = '<div class="center"><div class="spin"></div></div>';
-    return sb.from('registrations').select('id,user_id,status,ticket_code').eq('event_id', ev.id).neq('status', 'cancelled').order('created_at').then(function (r) {
+    // Rol ve basıldı alanları (025) yoksa eski sorguyla devam: panel hiçbir durumda kapıda durmaz
+    var full = 'id,user_id,status,ticket_code,badge_role,badge_printed_at';
+    var regs = function (cols) { return sb.from('registrations').select(cols).eq('event_id', ev.id).neq('status', 'cancelled').order('created_at'); };
+    return regs(full).then(function (r) { S.v25 = !r.error; return r.error ? regs('id,user_id,status,ticket_code') : r; }).then(function (r) {
       if (r.error) throw r.error;
       var rows = r.data || [];
       var ids = rows.map(function (x) { return x.user_id; }).filter(function (v, i, a) { return a.indexOf(v) === i; });
-      return (ids.length ? sb.from('profiles').select('id,full_name,department,university').in('id', ids) : Promise.resolve({ data: [] })).then(function (p) {
-        var by = {}; (p.data || []).forEach(function (x) { by[x.id] = x; });
-        S.people = rows.map(function (x) {
+      return Promise.all([
+        ids.length ? sb.from('profiles').select('id,full_name,department,university').in('id', ids) : Promise.resolve({ data: [] }),
+        S.v25 ? sb.from('badge_walkins').select('id,name,dept,role,printed_at').eq('event_id', ev.id).order('created_at') : Promise.resolve({ data: [] }),
+      ]).then(function (res) {
+        var by = {}; (res[0].data || []).forEach(function (x) { by[x.id] = x; });
+        var list = rows.map(function (x) {
           var pr = by[x.user_id] || {};
           var uni = UNIS[pr.university] || null;
-          return { id: x.id, name: pr.full_name || 'İsimsiz katılımcı', dept: [pr.department, uni ? uni.short : ''].filter(Boolean).join(' · '), code: x.ticket_code, status: x.status };
-        }).sort(function (a, b) { return a.name.localeCompare(b.name, 'tr'); });
+          return { id: x.id, kind: 'reg', name: pr.full_name || 'İsimsiz katılımcı', dept: [pr.department, uni ? uni.short : ''].filter(Boolean).join(' · '), code: x.ticket_code, status: x.status, role: x.badge_role || '', printedAt: x.badge_printed_at || null };
+        });
+        (res[1].data || []).forEach(function (w) { list.push({ id: w.id, kind: 'walk', name: w.name, dept: w.dept || '', code: '', status: 'walkin', role: w.role || '', printedAt: w.printed_at || null }); });
+        S.people = list.sort(function (a, b) { return a.name.localeCompare(b.name, 'tr'); });
         render();
       });
     }).catch(function (e) { msgBox('Yüklenemedi', '<span class="err">' + esc(e.message) + '</span>'); });
@@ -133,13 +144,14 @@
       : '<div class="t" style="font-size:' + (base * 0.105).toFixed(2) + 'mm">' + esc(D.title || '') + '</div>' + (D.sub ? '<div class="s" style="font-size:' + (base * 0.06).toFixed(2) + 'mm">' + esc(D.sub) + '</div>' : '');
     var hdBg = mono || img ? '#FFFFFF' : D.color;
     var name = p ? p.name : '';
+    var role = (p && p.role) || D.role; // kişiye özel rol tasarımdaki varsayılanı ezer
     return '<div class="badge' + (mono ? ' mono' : '') + '" style="width:' + w + 'mm;height:' + h + 'mm">' +
       (D.hole ? '<div class="hole"></div>' : '') +
       '<div class="hd' + (D.mode === 'image' && D.image && D.fit === 'cover' ? ' bleed' : '') + '" style="height:' + hdH.toFixed(2) + 'mm;background:' + hdBg + ';color:' + fg + (D.hole ? ';padding-top:6mm' : '') + '">' + head + '</div>' +
       '<div class="bd">' +
         '<div class="nm" data-fit="' + (base * 0.16).toFixed(2) + '" style="height:' + (base * 0.36).toFixed(2) + 'mm">' + (name ? esc(name) : '&nbsp;') + '</div>' +
         (D.dept && p && p.dept ? '<div class="dp" style="font-size:' + (base * 0.058).toFixed(2) + 'mm">' + esc(p.dept) + '</div>' : '') +
-        (D.role ? '<div class="role" style="font-size:' + (base * 0.05).toFixed(2) + 'mm;' + (mono ? 'background:#fff;color:#000;border:.45mm solid #000' : 'background:' + (light(D.color) ? '#15111F' : D.color) + ';color:#fff') + '">' + esc(D.role) + '</div>' : '') +
+        (role ? '<div class="role" style="font-size:' + (base * 0.05).toFixed(2) + 'mm;' + (mono ? 'background:#fff;color:#000;border:.45mm solid #000' : 'background:' + (light(D.color) ? '#15111F' : D.color) + ';color:#fff') + '">' + esc(role) + '</div>' : '') +
       '</div>' +
       '<div class="ft" style="height:' + ftH.toFixed(2) + 'mm">' +
         (D.qr && p && p.code ? '<div class="qr" style="width:' + (ftH - 3).toFixed(2) + 'mm;height:' + (ftH - 3).toFixed(2) + 'mm">' + qrSvg(p.code) + '</div>' : '') +
@@ -167,7 +179,10 @@
   function people() {
     var t = S.q.trim().toLocaleLowerCase('tr');
     return S.people.filter(function (p) {
-      var okF = S.f === 'all' || (S.f === 'ok' ? (p.status === 'approved' || p.status === 'checked_in') : p.status === S.f);
+      var okF = S.f === 'all' ? true
+        : S.f === 'ok' ? (p.status === 'approved' || p.status === 'checked_in' || p.status === 'walkin')
+        : S.f === 'unprinted' ? (!p.printedAt && (p.status === 'approved' || p.status === 'checked_in' || p.status === 'walkin'))
+        : p.status === S.f;
       return okF && (!t || p.name.toLocaleLowerCase('tr').indexOf(t) >= 0 || (p.code || '').toLowerCase().indexOf(t) >= 0);
     });
   }
@@ -207,17 +222,30 @@
         '<div class="preview" id="pv">' + badgeHTML(sample, D) + '</div>' +
         '<div class="list"><div class="tools">' +
           '<input class="in" id="q" placeholder="İsim ya da bilet kodu ara" value="' + esc(S.q) + '">' +
-          '<select class="in" id="f" style="flex:none;width:auto"><option value="ok"' + (S.f === 'ok' ? ' selected' : '') + '>Onaylı ve içeride</option><option value="all"' + (S.f === 'all' ? ' selected' : '') + '>Herkes</option><option value="pending"' + (S.f === 'pending' ? ' selected' : '') + '>Onay bekleyen</option><option value="waitlist"' + (S.f === 'waitlist' ? ' selected' : '') + '>Bekleme listesi</option></select>' +
+          '<select class="in" id="f" style="flex:none;width:auto"><option value="ok"' + (S.f === 'ok' ? ' selected' : '') + '>Onaylı ve içeride</option>' +
+            (S.v25 ? '<option value="unprinted"' + (S.f === 'unprinted' ? ' selected' : '') + '>Henüz basılmamış</option><option value="walkin"' + (S.f === 'walkin' ? ' selected' : '') + '>Kapıda kayıt</option>' : '') +
+            '<option value="all"' + (S.f === 'all' ? ' selected' : '') + '>Herkes</option><option value="pending"' + (S.f === 'pending' ? ' selected' : '') + '>Onay bekleyen</option><option value="waitlist"' + (S.f === 'waitlist' ? ' selected' : '') + '>Bekleme listesi</option></select>' +
           '<button class="btn sm" id="pSel"' + (nsel ? '' : ' disabled') + '>Seçilileri bas (' + nsel + ')</button>' +
           '<button class="ghost" id="pAll"' + (list.length ? '' : ' disabled') + '>Listedekileri bas (' + list.length + ')</button>' +
+          (S.v25 ? '<button class="ghost" id="walkBtn" title="Hesabı olmayan ya da biletini açamayan kişi için">＋ Kapıda kayıt</button>' : '') +
           '<button class="ghost" id="pBlank" title="Kapıda elle yazmak için">Boş kart</button>' +
         '</div>' +
+        (S.walk ? '<div class="walk"><b>Kapıda kayıt</b><span class="hint">Adı yaz, kartı hemen bas. Kayıt bu etkinliğe bağlı tutulur; etkinlik silinince silinir.</span>' +
+          '<input class="in" id="wName" maxlength="80" placeholder="Ad Soyad" autocomplete="off">' +
+          '<input class="in" id="wDept" maxlength="80" placeholder="Bölüm / kurum (isteğe bağlı)" autocomplete="off">' +
+          '<select class="in" id="wRole"><option value="">Rol: tasarımdaki varsayılan</option>' + ROLES.map(function (r) { return '<option>' + r + '</option>'; }).join('') + '</select>' +
+          '<div class="tools"><button class="btn sm" id="wGo">Kaydet ve bas</button><button class="ghost" id="wX">Vazgeç</button></div></div>' : '') +
+        (S.v25 ? '<div class="hint" style="margin:2px 0 6px">' + S.people.filter(function (p) { return p.printedAt; }).length + ' / ' + S.people.filter(function (p) { return p.status === 'approved' || p.status === 'checked_in' || p.status === 'walkin'; }).length + ' kart basıldı</div>' : '') +
         '<label class="check" style="margin:4px 0 6px"><input type="checkbox" id="all"' + (list.length && list.every(function (p) { return S.sel[p.id]; }) ? ' checked' : '') + '> Listedekilerin hepsini seç</label>' +
         (list.length ? list.map(function (p) {
+          var roleSel = S.v25 ? '<select class="rsel" data-r="' + p.id + '" title="Bu kişinin kartındaki rol"><option value="">' + esc(S.D.role ? 'Rol: ' + S.D.role : 'Rol yok') + '</option>' +
+            ROLES.concat(p.role && ROLES.indexOf(p.role) < 0 ? [p.role] : []).map(function (r) { return '<option' + (r === p.role ? ' selected' : '') + '>' + esc(r) + '</option>'; }).join('') + '</select>' : '';
           return '<div class="person"><input type="checkbox" data-s="' + p.id + '"' + (S.sel[p.id] ? ' checked' : '') + '>' +
-            '<div><div class="nm">' + esc(p.name) + '</div><div class="dt">' + esc(p.dept || '—') + ' · ' + esc(p.code) + '</div></div>' +
-            '<span class="st' + (p.status === 'checked_in' ? ' inside' : '') + '">' + (STATUS[p.status] || p.status) + '</span>' +
-            '<button class="pbtn" data-p="' + p.id + '">Bas</button></div>';
+            '<div><div class="nm">' + esc(p.name) + '</div><div class="dt">' + esc(p.dept || '—') + (p.code ? ' · ' + esc(p.code) : '') +
+              (p.printedAt ? ' · <span class="printed">Basıldı ✓ ' + esc(hm(p.printedAt)) + '</span>' : '') + '</div></div>' +
+            roleSel +
+            '<span class="st' + (p.status === 'checked_in' ? ' inside' : p.status === 'walkin' ? ' walkin' : '') + '">' + (STATUS[p.status] || p.status) + '</span>' +
+            '<button class="pbtn" data-p="' + p.id + '">' + (p.printedAt ? 'Yeniden bas' : 'Bas') + '</button></div>';
         }).join('') : '<div class="empty">Bu listede kimse yok</div>') +
       '</div></div></div>';
     fit(document.getElementById('pv'));
@@ -264,6 +292,47 @@
     $('pSel').onclick = function () { printCards(S.people.filter(function (p) { return S.sel[p.id]; })); };
     $('pAll').onclick = function () { printCards(people()); };
     $('pBlank').onclick = function () { var n = parseInt(prompt('Kaç boş kart?', '4') || '0', 10); if (n > 0 && n <= 100) printCards(Array.apply(null, Array(n)).map(function () { return null; })); };
+    // Kişiye özel rol
+    Array.prototype.forEach.call(document.querySelectorAll('[data-r]'), function (sel) {
+      sel.onchange = function () {
+        var id = sel.getAttribute('data-r'), p = S.people.filter(function (x) { return x.id === id; })[0]; if (!p) return;
+        var role = sel.value, prev = p.role; p.role = role; render();
+        var req = p.kind === 'walk' ? sb.from('badge_walkins').update({ role: role || null }).eq('id', id).select('id') : sb.rpc('set_badge_role', { p_reg: id, p_role: role });
+        req.then(function (r) { if (r.error) { p.role = prev; render(); toast('Rol kaydedilemedi: ' + r.error.message); } });
+      };
+    });
+    // Kapıda kayıt
+    if ($('walkBtn')) $('walkBtn').onclick = function () { S.walk = true; render(); var n = $('wName'); if (n) n.focus(); };
+    if ($('wX')) $('wX').onclick = function () { S.walk = false; render(); };
+    if ($('wGo')) {
+      var go = function () {
+        var name = ($('wName').value || '').trim(), dept = ($('wDept').value || '').trim(), role = $('wRole').value;
+        if (name.length < 2) { toast('Adı yaz'); $('wName').focus(); return; }
+        $('wGo').disabled = true;
+        sb.from('badge_walkins').insert({ event_id: S.ev.id, name: name, dept: dept, role: role || null }).select('id,name,dept,role,printed_at').single().then(function (r) {
+          if (r.error) throw r.error;
+          var p = { id: r.data.id, kind: 'walk', name: r.data.name, dept: r.data.dept || '', code: '', status: 'walkin', role: r.data.role || '', printedAt: null };
+          S.people.push(p); S.people.sort(function (a, b) { return a.name.localeCompare(b.name, 'tr'); });
+          S.walk = false; render(); printCards([p]);
+        }).catch(function (e) { $('wGo').disabled = false; toast('Kaydedilemedi: ' + e.message); });
+      };
+      $('wGo').onclick = go;
+      ['wName', 'wDept'].forEach(function (k) { $(k).onkeydown = function (e) { if (e.key === 'Enter') go(); }; });
+    }
+  }
+
+  // Basıldı işareti: yazdırma penceresi açıldığında (gerçekten basılıp basılmadığını tarayıcı bildirmez; yeniden basmak her zaman serbest)
+  function markPrinted(list) {
+    if (!S.v25) return;
+    var regs = [], walks = [];
+    list.forEach(function (p) { if (!p) return; (p.kind === 'walk' ? walks : regs).push(p.id); });
+    if (!regs.length && !walks.length) return;
+    var now = new Date().toISOString();
+    sb.rpc('mark_badges_printed', { p_event: S.ev.id, p_regs: regs, p_walkins: walks }).then(function (r) {
+      if (r.error) return toast('Basıldı işareti kaydedilemedi: ' + r.error.message);
+      list.forEach(function (p) { if (p) p.printedAt = now; });
+      render();
+    });
   }
 
   function upload(file) {
@@ -316,7 +385,7 @@
       .then(function () {
         fit($print);
         $print.style.cssText = '';
-        setTimeout(function () { window.print(); }, 50);
+        setTimeout(function () { window.print(); markPrinted(list); }, 50);
       });
   }
 
