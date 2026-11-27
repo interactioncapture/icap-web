@@ -159,17 +159,20 @@
     if (!ev) return;
     var cap = ev.capacity || 0, left = Math.max(0, cap - S.going), pct = cap ? Math.min(100, Math.round(S.going / cap * 100)) : 0;
     var full = left <= 0;
+    var over = ended(ev);
     var h = cover(ev) +
       '<h1 class="title">' + esc(ev.title) + '</h1>' +
       '<div class="info">' +
       '<div><span class="ic">' + ICON.cal + '</span><span><small>Tarih</small><strong>' + esc(fmtDate(ev.starts_at, ev.tz)) + ' · ' + esc(fmtTime(ev.starts_at, ev.tz)) + '</strong></span></div>' +
       '<div><span class="ic">' + ICON.pin + '</span><span><small>Yer</small><strong>' + esc(ev.place) + '</strong></span></div></div>' +
       (ev.lat != null ? '<a class="map" href="https://www.google.com/maps/search/?api=1&query=' + ev.lat + ',' + ev.lng + '" target="_blank" rel="noopener"><div id="evmap"></div><span>Yol tarifi al →</span></a>' : '') +
-      '<div class="social"><span>' + (S.going >= 3 ? S.going + ' kişi geliyor' : 'Yeni açıldı, ilk gelenlerden ol') + '</span><div class="bar"><i style="width:' + pct + '%"></i></div><span class="muted">' + (full ? 'Dolu' : left + ' yer') + '</span></div>' +
+      (over
+        ? '<div class="social"><span>Etkinlik sona erdi</span>' + (S.going >= 3 ? '<span class="muted">' + S.going + ' kişi katıldı</span>' : '') + '</div>'
+        : '<div class="social"><span>' + (S.going >= 3 ? S.going + ' kişi geliyor' : 'Yeni açıldı, ilk gelenlerden ol') + '</span><div class="bar"><i style="width:' + pct + '%"></i></div><span class="muted">' + (full ? 'Dolu' : left + ' yer') + '</span></div>') +
       ((ev.approval_required || ev.off_campus || ev.has_food || ev.online || ev.permit_status === 'approved' || (ev.clubs && (ev.clubs.official || ev.clubs.kind === 'crew')) || ev.kind === 'meetup' || ev.venue_type === 'food') ? '<p style="margin-bottom:12px;display:flex;gap:6px;flex-wrap:wrap">' + (ev.off_campus ? '<span class="chip orange">Kampüs dışı</span>' : '') + (ev.permit_status === 'approved' ? '<span class="chip">SKS onaylı</span>' : '') + (ev.clubs && ev.clubs.official ? '<span class="chip">Resmî kulüp</span>' : '') + (ev.clubs && ev.clubs.kind === 'crew' ? '<span class="chip">Ekip</span>' : '') + (ev.kind === 'meetup' ? '<span class="chip">Buluşma</span>' : '') + (ev.venue_type === 'food' ? '<span class="chip orange">Yemekte</span>' : '') + (ev.has_food ? '<span class="chip orange">İkram var</span>' : '') + (ev.online ? '<span class="chip">Online</span>' : '') + (ev.approval_required ? '<span class="chip">Kayıtlar kulüp onayıyla kesinleşir</span>' : '') + '</p>' : '') +
       (ev.about ? '<p class="about">' + esc(ev.about) + '</p>' : '');
     if (S.reg) h += ticketHtml();
-    else if (S.showForm && !S.session) h += formHtml();
+    else if (S.showForm && !S.session && !over) h += formHtml();
     else if (S.err) h += '<div class="err">' + esc(S.err) + '</div>';
     h += '<footer><a href="' + ROOT + '">icap</a> · Invite · Connect · Attend · Post · <a href="' + ROOT + 'kvkk/">KVKK</a></footer>';
     $app.innerHTML = h;
@@ -196,11 +199,12 @@
 
     // Alt bar
     var cta;
-    if (S.reg) cta = '<button class="btn wa" id="share">' + ICON.wa + ' Arkadaşına gönder</button>';
+    if (over) cta = '<button class="btn" disabled>Sona erdi</button>';
+    else if (S.reg) cta = '<button class="btn wa" id="share">' + ICON.wa + ' Arkadaşına gönder</button>';
     else if (S.busy) cta = '<button class="btn" disabled><span class="spin"></span></button>';
     else cta = '<button class="btn" id="join">' + (full ? 'Bekleme listesine gir' : ev.approval_required ? 'Katılım iste' : 'Katıl') + '</button>';
     $sticky.innerHTML = '<div class="in"><div class="price"><small>Fiyat</small><b>' + price(ev.price) + '</b></div>' + cta + '</div>';
-    $sticky.classList.toggle('hide', !!(S.showForm && !S.session && !S.reg));
+    $sticky.classList.toggle('hide', !!(S.showForm && !S.session && !S.reg && !over));
     var j = document.getElementById('join'); if (j) j.onclick = join;
     var sh = document.getElementById('share'); if (sh) sh.onclick = share;
   }
@@ -211,7 +215,11 @@
     location.href = 'https://wa.me/?text=' + encodeURIComponent(text);
   }
 
+  // Sunucudaki kuralla aynı: başlangıçtan 6 saat sonra kayıt kapanır (register_event "Bu etkinlik sona erdi")
+  function ended(ev) { return Date.parse(ev.starts_at) < Date.now() - 6 * 3600e3; }
+
   function join() {
+    if (ended(S.ev)) return;
     S.err = null;
     if (!S.session) { S.showForm = true; renderEvent(); var f = document.getElementById('form'); if (f) f.scrollIntoView({ behavior: 'smooth', block: 'start' }); return; }
     register();
